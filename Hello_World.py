@@ -9,7 +9,7 @@ DIN  = 12 # gpio pin 19 = wiringpi no. 12 (MOSI BCM 10)
 
 # data
 COLS = 20
-ROWS = 2
+ROWS = 4
 
 # commands
 VFD_CLEARDISPLAY = 0x01
@@ -63,8 +63,8 @@ def init():
     begin(COLS,ROWS,_displayfunction, VFD_BRIGHTNESS25)
 
 def begin(cols, lines, _displayfunction, brightness):
-    if lines > 1:
-       _displayfunction |= VFD_2LINE
+#    if lines > 1:
+#       _displayfunction |= VFD_2LINE
 
     setBrightness(_displayfunction, brightness)
 
@@ -80,7 +80,7 @@ def begin(cols, lines, _displayfunction, brightness):
     command(VFD_SETDDRAMADDR)  
     
     # turn the display on with no cursor or blinking default
-    command(VFD_DISPLAYCONTROL | VFD_DISPLAYON)
+    command(VFD_DISPLAYCONTROL | VFD_DISPLAYON | VFD_BLINKON)
     
     
     clear()
@@ -100,14 +100,15 @@ def home():
 
 def setBrightness(_displayfunction, brightness):
     #set the brightness (only if a valid value is passed
-    if brightness <= VFD_BRIGHTNESS25: 
-        _displayfunction &= ~VFD_BRIGHTNESS25
-        _displayfunction |= brightness
+#    if brightness <= VFD_BRIGHTNESS25: 
+#        _displayfunction &= ~VFD_BRIGHTNESS25
+#        _displayfunction |= brightness
 
     command(VFD_FUNCTIONSET | _displayfunction)
+    data(brightness)
 
 def setCursor(col, row):
-    _numlines = 2
+    _numlines = ROWS
     row_offsets = [0x00, 0x40, 0x14, 0x54]
     if row > _numlines:
        row = _numlines-1        # count rows starting with 0
@@ -120,10 +121,11 @@ def noDisplay(vfdoff):
 
 def text(string):
     #   display_char(ord(char))
-    l = [VFD_SPIDATA]
+#    l = [VFD_SPIDATA]
     for char in string:
-       l.append(ord(char))
-    spi.writebytes(list(l))
+        data(ord(char))
+#       l.append(ord(char))
+#    spi.writebytes(list(l))
     
 def blank_lines():
     thistext = "                    "
@@ -134,6 +136,9 @@ def blank_lines():
 
 def command(_setting):
     spi.xfer2([VFD_SPICOMMAND, _setting])
+
+def data(_byte):
+    spi.xfer2([VFD_SPIDATA, _byte])
   
 
 # initalize SPI
